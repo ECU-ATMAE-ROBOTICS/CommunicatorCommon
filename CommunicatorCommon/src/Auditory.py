@@ -1,99 +1,117 @@
+# Built-in
+import logging
+
 # Third Party
-import serial
+from serial import Serial
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    filename="CommunicatorCommon/log/logs.log",
+    filemode="a",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 class Auditory:
-    __START_MARKER = "<"
-    __END_MARKER = ">"
+    logger = logging.getLogger(__name__)
+
+    START_MARKER = "<"
+    END_MARKER = ">"
 
     def __init__(
-        self, baudRate: str = "9600", serialPortName: str = "/dev/ttyACM0"
+        self,
+        baudRate: str = "9600",
+        serialPortName: str = "/dev/ttyACM0",
+        readyVerification: str = None,
     ) -> None:
-        self.listening = False
+        """Constructor for Auditory
+
+        Args:
+            baudRate (str, optional):The baudrate to establish the serial connection with. Defaults to "9600".
+            serialPortName (str, optional): The port name to establish the serial connection on. Defaults to "/dev/ttyACM0".
+            readyVerification (str, optional): The message expected to be recieved by the other device to establish
+            that it's ready for commmunication. Defaults to None.
+        """
+        self.readyVerification = readyVerification
         self.dataStarted = False
         self.dataBuf = ""
         self.messageComplete = False
         self.serialPort = None
-        self.__parse_file(baudRate, serialPortName)
+        self.parseFile(baudRate, serialPortName)
 
-    def __parse_file(self, baudRate: str, serialPortName: str) -> None:
+    def parseFile(self, baudRate: str, serialPortName: str) -> None:
         """Initializes serial upon class initialization
 
         Args:
-            baudRate (str): _description_
-            serialPortName (str): _description_
+            baudRate (str): Baudrate of the serial connection
+            serialPortName (str): Port that the serial is connected to
         """
-        self.__setupSerial(baudRate, serialPortName)
+        self.setupSerial(baudRate, serialPortName)
 
-    def __setupSerial(self, baudRate: str, serialPortName: str) -> None:
+    def setupSerial(self, baudRate: str, serialPortName: str) -> None:
         """Initialize the serial and wait for the Arduino to be ready
 
         Args:
             baudRate (str): Baudrate of the serial connection
             serialPortName (str): Port that the serial is connected to
         """
-        self.serialPort = serial.Serial(
+        self.serialPort = Serial(
             port=serialPortName, baudrate=baudRate, timeout=0, rtscts=True
         )
+        Auditory.logger.info(f"Serial port {serialPortName} opened Baudrate {baudRate}")
 
-        print("Serial port " + serialPortName + " opened  Baudrate " + str(baudRate))
-        self.__waitForArduino()
+        self.waitForConnection()
 
-    def __sendToArduino(self, stringToSend: str) -> None:
+    def sendSerial(self, stringToSend: str) -> None:
         """Creates a "packet" to write into the serial
 
         Args:
             stringToSend (str): The string msg to send
         """
-        stringWithMarkers = Auditory.__START_MARKER
+        stringWithMarkers = Auditory.START_MARKER
         stringWithMarkers += stringToSend
-        stringWithMarkers += Auditory.__END_MARKER
+        stringWithMarkers += Auditory.END_MARKER
 
         self.serialPort.write(
             stringWithMarkers.encode("utf-8")
         )  # encode needed for Python3
 
-    def __recvLikeArduino(self) -> str:
-        """Reads a char from the arduino, building the message.
+    def recvSerial(self) -> str:
+        """Reads a char from the device, building the message.
         NOTE: This method does not contain the logic to iterate until the message is complete. That should be
         implemented by whatever calls this
 
         Returns:
-            str: Message recieved by the Arduino
+            str: Message recieved by the device
         """
-        if (
-            self.serialPort.inWaiting() > 0
-            and self.messageComplete == False
-            or self.listening is True
-        ):
+        if self.serialPort.inWaiting() > 0 and not self.messageComplete:
             x = self.serialPort.read().decode(
                 "utf-8", errors="replace"
             )  # decode needed for Python3
 
-            if self.dataStarted == True:
-                if x != Auditory.__END_MARKER:
+            if self.dataStarted:
+                if x != Auditory.END_MARKER:
                     self.dataBuf = self.dataBuf + x
                 else:
                     self.dataStarted = False
                     self.messageComplete = True
-            elif x == Auditory.__START_MARKER:
+            elif x == Auditory.START_MARKER:
                 self.dataBuf = ""
                 self.dataStarted = True
 
-        if self.messageComplete == True:
+        if self.messageComplete:
             self.messageComplete = False
             return self.dataBuf
         else:
-            return "XXX"  # Message is not done when this is returned
+            return ""
 
-    def __waitForArduino(self) -> None:
-        """Waits for the Arduino to signal it is ready for communication"""
-        print("Waiting for Arduino to reset")
+    def waitForConnection(self) -> None:
+        """Waits for the device to signal it is ready for communication"""
+        Auditory.logger.info("Waiting for connection")
 
         msg = ""
-        while (
-            msg.find("Arduino is ready") == -1
-        ):  # This msg should be sent from the arduino to signal being ready
-            msg = self.recvLikeArduino()
-            if not (msg == "XXX"):
-                print(msg)
+        while msg.find(self.readyVerification) == -1:
+            msg = self.recvSerial()
+            if msg:
+                Auditory.logger.info("Device connection established")
