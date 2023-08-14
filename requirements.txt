@@ -4,4 +4,4 @@ mockito==1.4.0
 packaging==23.1
 pluggy==1.2.0
 pyserial==3.5
-pytest==7.4.0
+smbus2==0.4.2
