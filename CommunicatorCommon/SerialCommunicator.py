@@ -9,16 +9,16 @@ logging.basicConfig(
 )
 
 # Internal
-from .src.Auditory import Auditory
+from .src.SerialSpec import SerialSpec
 
 
-class Communicator(Auditory):
+class SerialCommunicator:
     logger = logging.getLogger(__name__)
 
     def __init__(
         self, baudRate: str = "9600", serialPortName: str = "/dev/ttyACM0"
     ) -> None:
-        super().__init__(baudRate, serialPortName)
+        self.serialComm = SerialSpec(baudRate, serialPortName)
 
     def sendMsg(self, msg: str) -> None:
         """Sends a message through the serial connection
@@ -26,15 +26,15 @@ class Communicator(Auditory):
         Args:
             msg (str): Message to send
         """
-        self.sendSerial(msg)
+        self.serialComm.sendSerial(msg)
 
-    def recieveMsg(self) -> str:
+    def receiveMsg(self) -> str:
         """Listens for a message from the serial connection until a full message is recieved
 
         Returns:
             str: Message recieved
         """
         while True:
-            msg = self.recvSerial()
+            msg = self.serialComm.recvSerial()
             if msg:
                 return msg

@@ -13,7 +13,7 @@ logging.basicConfig(
 )
 
 
-class Auditory:
+class SerialSpec:
     logger = logging.getLogger(__name__)
 
     START_MARKER = "<"
@@ -21,15 +21,11 @@ class Auditory:
 
     def __init__(
         self,
-        baudRate: str = "9600",
-        serialPortName: str = "/dev/ttyACM0",
         readyVerification: str = None,
     ) -> None:
-        """Constructor for Auditory
+        """Constructor for SerialSpec
 
-        Args:
-            baudRate (str, optional):The baudrate to establish the serial connection with. Defaults to "9600".
-            serialPortName (str, optional): The port name to establish the serial connection on. Defaults to "/dev/ttyACM0".
+        Args:.
             readyVerification (str, optional): The message expected to be recieved by the other device to establish
             that it's ready for commmunication. Defaults to None.
         """
@@ -38,28 +34,22 @@ class Auditory:
         self.dataBuf = ""
         self.messageComplete = False
         self.serialPort = None
-        self.parseFile(baudRate, serialPortName)
 
-    def parseFile(self, baudRate: str, serialPortName: str) -> None:
-        """Initializes serial upon class initialization
-
-        Args:
-            baudRate (str): Baudrate of the serial connection
-            serialPortName (str): Port that the serial is connected to
-        """
-        self.setupSerial(baudRate, serialPortName)
-
-    def setupSerial(self, baudRate: str, serialPortName: str) -> None:
-        """Initialize the serial and wait for the Arduino to be ready
+    def setupSerial(
+        self, baudRate: str = "9600", serialPortName: str = "/dev/ttyACM0"
+    ) -> None:
+        """Intialize the Serial Connection
 
         Args:
-            baudRate (str): Baudrate of the serial connection
-            serialPortName (str): Port that the serial is connected to
+            baudRate (str, optional): The baudrate of the serial connection. Defaults to "9600".
+            serialPortName (str, optional): The port to open the serial connection on. Defaults to "/dev/ttyACM0".
         """
         self.serialPort = Serial(
             port=serialPortName, baudrate=baudRate, timeout=0, rtscts=True
         )
-        Auditory.logger.info(f"Serial port {serialPortName} opened Baudrate {baudRate}")
+        SerialSpec.logger.info(
+            f"Serial port {serialPortName} opened Baudrate {baudRate}"
+        )
 
         self.waitForConnection()
 
@@ -69,9 +59,9 @@ class Auditory:
         Args:
             stringToSend (str): The string msg to send
         """
-        stringWithMarkers = Auditory.START_MARKER
+        stringWithMarkers = SerialSpec.START_MARKER
         stringWithMarkers += stringToSend
-        stringWithMarkers += Auditory.END_MARKER
+        stringWithMarkers += SerialSpec.END_MARKER
 
         self.serialPort.write(
             stringWithMarkers.encode("utf-8")
@@ -91,12 +81,12 @@ class Auditory:
             )  # decode needed for Python3
 
             if self.dataStarted:
-                if x != Auditory.END_MARKER:
+                if x != SerialSpec.END_MARKER:
                     self.dataBuf = self.dataBuf + x
                 else:
                     self.dataStarted = False
                     self.messageComplete = True
-            elif x == Auditory.START_MARKER:
+            elif x == SerialSpec.START_MARKER:
                 self.dataBuf = ""
                 self.dataStarted = True
 
@@ -108,10 +98,11 @@ class Auditory:
 
     def waitForConnection(self) -> None:
         """Waits for the device to signal it is ready for communication"""
-        Auditory.logger.info("Waiting for connection")
+        SerialSpec.logger.info("Waiting for connection")
 
         msg = ""
-        while msg.find(self.readyVerification) == -1:
+        while not msg.startswith(self.readyVerification):
             msg = self.recvSerial()
             if msg:
-                Auditory.logger.info("Device connection established")
+                SerialSpec.logger.info("Device connection established")
+                break
