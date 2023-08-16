@@ -5,14 +5,6 @@ import logging
 from serial import Serial
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    filename="CommunicatorCommon/log/logs.log",
-    filemode="a",
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
-
 class SerialSpec:
     logger = logging.getLogger(__name__)
 
