@@ -96,12 +96,12 @@ class SerialCommunicator:
         """
         Waits for the device to signal it is ready for communication.
         """
-        SerialCommunicator.logger.logging.info("Waiting for connection")
+        SerialCommunicator.logger.info("Waiting for connection")
         msg = ""
         while not msg.startswith(self.readyVerification):
             msg = await self.receiveMsg()
             if msg:
-                SerialCommunicator.logger.logging.info("Device connection established")
+                SerialCommunicator.logger.info("Device connection established")
                 break
 
     def closeSerial(self) -> None:
