@@ -5,9 +5,6 @@ from typing import List
 # Third Party
 import smbus2
 
-# Internal
-from .src.Event import Event
-
 
 class I2CCommunicator:
     """

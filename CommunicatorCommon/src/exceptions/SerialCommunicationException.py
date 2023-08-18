@@ -1,4 +1,4 @@
-class SerialCommunicationError(Exception):
+class SerialCommunicationException(Exception):
     """Custom exception for serial communication errors."""
 
     def __init__(self, msg: str) -> None:
