@@ -1,136 +1,55 @@
-# Built-in
-import logging
 import asyncio
-from serial import Serial
-
-# Exceptions
-from .src.exceptions.SerialPortSetupException import SerialPortSetupException
-from .src.exceptions.SerialCommunicationException import SerialCommunicationException
-
+import serial
+import logging
+from typing import Optional
 
 class SerialCommunicator:
     """
-    A class for serial communication handling.
-
-    Args:
-        receiveTimeout (int): How long the receiveMsg method will listen before returning the msg.
+    A class for communicating through a serial port asynchronously.
     """
 
-    logger = logging.getLogger(__name__)
-    startMarker = b"<"
-    endMarker = b">"
-
-    def __init__(self, receiveTimeout: int = 1) -> None:
+    def __init__(self, port: str= "dev/ttyACM0", baudRate: int=9600) -> None:
         """
-        Initializes the SerialCommunicator.
+        Initialize the SerialCommunicator class.
 
         Args:
-            receiveTimeout (int): How long the receiveMsg method will listen before returning the msg.
+            port (str): The name of the serial port to connect to.
+            baudRate (int): The baud rate for the serial communication.
         """
-        self.serialPort = None
-        self.receiveTimeout = receiveTimeout
+        self._port = port
+        self._baudRate = baudRate
+        self._serialConnection = serial.Serial(port, baudRate)
+        self._logger = logging.getLogger("SerialCommunicator")
 
-    async def setupSerial(
-        self,
-        baudRate: int = 9600,
-        serialPortName: str = "/dev/ttyACM0",
-        waitForConnection: bool = False,
-    ) -> None:
+    async def sendMessage(self, message: str) -> None:
         """
-        Sets up the serial port for communication.
+        Send a message through the serial port.
 
         Args:
-            baudRate (int): Baud rate for serial communication.
-            serialPortName (str): Name of the serial port.
-            waitForConnection (bool): Whether to wait for the connection to be established.
+            message (str): The message to be sent.
         """
-        try:
-            self.serialPort = Serial(
-                port=serialPortName, baudrate=baudRate, timeout=0, rtscts=True
-            )
+        encodedMessage = message.encode()
+        await asyncio.get_running_loop().run_in_executor(None, self._serialConnection.write, encodedMessage)
+        self._logger.info(f"Sent message: {message}")
 
-            self.serialReader, _ = await asyncio.to_thread(
-                asyncio.StreamReader, loop=asyncio.get_event_loop()
-            )
-            self.serialReaderProtocol = asyncio.StreamReaderProtocol(self.serialReader)
-            self.serialReaderTransport, _ = await asyncio.to_thread(
-                asyncio.get_event_loop().connect_read_pipe,
-                lambda: self.serialReaderProtocol,
-                self.serialPort,
-            )
-            if waitForConnection:
-                await self._waitForConnection()
-        except Exception as e:
-            raise SerialPortSetupException("Error setting up serial port") from e
-
-    async def sendMsg(self, msg: str) -> None:
+    async def receiveMessage(self, timeout: Optional[float] = None) -> str:
         """
-        Sends a message through the serial connection in the specified format.
+        Receive a message from the serial port.
 
         Args:
-            msg (str): Message content to send.
-        """
-
-        messageSize = len(msg)
-        messageToSend = f"<{messageSize:04}{msg}>"
-        try:
-            self.serialPort.write(messageToSend.encode("utf-8"))
-        except Exception as e:
-            SerialCommunicator.logger.error(f"Error while sending message: {e}")
-            raise SerialCommunicationException()
-
-    async def receiveMsg(self) -> str:
-        """
-        Receives a message from the serial connection.
+            timeout (float, optional): Timeout in seconds for the operation.
 
         Returns:
-            str: The received message content.
+            str: The received message.
         """
-        startMarkerFound = False
-        while not startMarkerFound:
-            data = await self.serialReader.read(1)
-            if data == SerialCommunicator.startMarker:
-                startMarkerFound = True
+        receivedMessage = await asyncio.get_running_loop().run_in_executor(None, self._serialConnection.read)
+        receivedMessage = receivedMessage.decode()
+        self._logger.info(f"Received message: {receivedMessage}")
+        return receivedMessage
 
-        msgSizeStr = b""
-        while True:
-            char = await self.serialReader.read(1)
-            if char == SerialCommunicator.endMarker:
-                break
-            msgSizeStr += char
-        msgSize = int(msgSizeStr)
-
-        try:
-            msgContent = await self.serialReader.read(msgSize)
-        except TimeoutError as te:
-            SerialCommunicator.logger.error("Timeout while reading message content.")
-            raise te
-
-        if len(msgContent) != msgSize:
-            SerialCommunicator.logger.error("Received incomplete message content.")
-            raise ValueError("Received incomplete message content.")
-
-        return msgContent.decode("utf-8")
-
-    async def _waitForConnection(self, readyVerification: str = None) -> None:
+    def close(self) -> None:
         """
-        Waits for the connection to be established.
-
-        Args:
-            readyVerification (str): Verification string for connection readiness.
+        Close the serial connection.
         """
-        SerialCommunicator.logger.info("Waiting for connection")
-        msg = ""
-        while not msg.startswith(readyVerification):
-            msg = await self.receiveMsg()
-            if msg:
-                SerialCommunicator.logger.info("Device connection established")
-                break
-
-    def closeSerial(self) -> None:
-        """
-        Closes the serial port.
-        """
-        if self.serialPort:
-            self.serialPort.close()
-            self.serialPort = None
+        self._serialConnection.close()
+        self._logger.info("Serial connection closed.")
