@@ -1,4 +1,3 @@
-import logging
 import asyncio
 
 # Third Party
@@ -12,8 +11,6 @@ class I2CCommunicator:
     Attributes:
         busId (int): The I2C bus ID.
     """
-
-    logger = logging.getLogger(__name__)
 
     def __init__(self, busId: int = 1) -> None:
         """
@@ -33,13 +30,12 @@ class I2CCommunicator:
         Args:
             msg (bytes): The message to send.
         """
-        self.logger.info("Sending data: %s", msg)
         try:
             await asyncio.to_thread(
                 self._bus.write_i2c_block_data, address, 0, list(msg)
             )
         except Exception as e:
-            self.logger.error("Error sending data: %s", str(e))
+            raise e
 
     async def receiveMsg(self, address: int, length: int) -> bytes:
         """
@@ -51,11 +47,10 @@ class I2CCommunicator:
         Returns:
             bytes: The received data.
         """
-        self.logger.info("Receiving data of length %d", length)
         try:
             receivedMsg = await asyncio.to_thread(
                 self._bus.read_i2c_block_data, address, 0, length
             )
             return bytes(receivedMsg)
         except Exception as e:
-            self.logger.error("Error receiving data: %s", str(e))
+            raise e

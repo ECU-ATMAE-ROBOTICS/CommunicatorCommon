@@ -1,14 +1,14 @@
 import asyncio
 import serial
-import logging
 from typing import Optional
+
 
 class SerialCommunicator:
     """
     A class for communicating through a serial port asynchronously.
     """
 
-    def __init__(self, port: str= "dev/ttyACM0", baudRate: int=9600) -> None:
+    def __init__(self, port: str = "dev/ttyACM0", baudRate: int = 9600) -> None:
         """
         Initialize the SerialCommunicator class.
 
@@ -19,7 +19,6 @@ class SerialCommunicator:
         self._port = port
         self._baudRate = baudRate
         self._serialConnection = serial.Serial(port, baudRate)
-        self._logger = logging.getLogger("SerialCommunicator")
 
     async def sendMessage(self, message: str) -> None:
         """
@@ -29,8 +28,9 @@ class SerialCommunicator:
             message (str): The message to be sent.
         """
         encodedMessage = message.encode()
-        await asyncio.get_running_loop().run_in_executor(None, self._serialConnection.write, encodedMessage)
-        self._logger.info(f"Sent message: {message}")
+        await asyncio.get_running_loop().run_in_executor(
+            None, self._serialConnection.write, encodedMessage
+        )
 
     async def receiveMessage(self, timeout: Optional[float] = None) -> str:
         """
@@ -42,9 +42,10 @@ class SerialCommunicator:
         Returns:
             str: The received message.
         """
-        receivedMessage = await asyncio.get_running_loop().run_in_executor(None, self._serialConnection.read)
+        receivedMessage = await asyncio.get_running_loop().run_in_executor(
+            None, self._serialConnection.read
+        )
         receivedMessage = receivedMessage.decode()
-        self._logger.info(f"Received message: {receivedMessage}")
         return receivedMessage
 
     def close(self) -> None:
@@ -52,4 +53,3 @@ class SerialCommunicator:
         Close the serial connection.
         """
         self._serialConnection.close()
-        self._logger.info("Serial connection closed.")
