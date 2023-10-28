@@ -1,6 +1,6 @@
-# Vision Common
+# Communicator Common
 
-]Common package for communications between devices. Contains Communicator classes which can be used to build controllers to handle communications between different devices in a simple and abstracted way.
+Common package for communications between devices. Contains Communicator classes which can be used to build controllers to handle communications between different devices in a simple and abstracted way.
 
 ## Table of Contents
 
