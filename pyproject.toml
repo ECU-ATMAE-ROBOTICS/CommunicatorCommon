@@ -4,27 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "CommunicatorCommon"
-version = "1.0.1"
+version = "1.2.0"
 authors = [{ name = "Jarred" }]
 description = "Common Package for robotic communication"
 readme = "README.md"
 keywords = []
 license = { text = "GPL-3.0" }
 classifiers = ["Programming Language :: Python :: 3"]
-dependencies = [
-    "aiohttp",
-    "aiosignal",
-    "async-timeout",
-    "attrs",
-    "charset-normalizer",
-    "coverage",
-    "frozenlist",
-    "idna",
-    "iniconfig",
-    "multidict",
-    "packaging",
-    "pluggy",
-    "pyserial",
-    "smbus2",
-    "yarl",
-]
+dependencies = ["smbus2", "pyserial"]
