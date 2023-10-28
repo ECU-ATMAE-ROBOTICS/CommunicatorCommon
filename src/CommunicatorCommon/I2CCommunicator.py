@@ -1,5 +1,3 @@
-import asyncio
-
 # Third Party
 import smbus2
 
@@ -23,7 +21,7 @@ class I2CCommunicator:
         self._busId = busId
         self._bus = smbus2.SMBus(busId)
 
-    async def sendMsg(self, address: int, msg: bytes) -> None:
+    def sendMsg(self, address: int, msg: bytes) -> None:
         """
         Send a message via I2C.
 
@@ -31,13 +29,11 @@ class I2CCommunicator:
             msg (bytes): The message to send.
         """
         try:
-            await asyncio.to_thread(
-                self._bus.write_i2c_block_data, address, 0, list(msg)
-            )
+            self._bus.write_i2c_block_data(address, 0, list(msg))
         except Exception as e:
             raise e
 
-    async def receiveMsg(self, address: int, length: int) -> bytes:
+    def receiveMsg(self, address: int, length: int) -> bytes:
         """
         Receive data of the specified length via I2C.
 
@@ -48,9 +44,7 @@ class I2CCommunicator:
             bytes: The received data.
         """
         try:
-            receivedMsg = await asyncio.to_thread(
-                self._bus.read_i2c_block_data, address, 0, length
-            )
+            receivedMsg = self._bus.read_i2c_block_data(address, 0, length)
             return bytes(receivedMsg)
         except Exception as e:
             raise e

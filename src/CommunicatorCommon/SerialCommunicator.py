@@ -1,11 +1,13 @@
-import asyncio
+# Third Party
 import serial
+
+# Built-in
 from typing import Optional
 
 
 class SerialCommunicator:
     """
-    A class for communicating through a serial port asynchronously.
+    A class for communicating through a serial port.
     """
 
     def __init__(self, port: str = "dev/ttyACM0", baudRate: int = 9600) -> None:
@@ -20,7 +22,7 @@ class SerialCommunicator:
         self._baudRate = baudRate
         self._serialConnection = serial.Serial(port, baudRate)
 
-    async def sendMessage(self, message: str) -> None:
+    def sendMessage(self, message: str) -> None:
         """
         Send a message through the serial port.
 
@@ -28,11 +30,10 @@ class SerialCommunicator:
             message (str): The message to be sent.
         """
         encodedMessage = message.encode()
-        await asyncio.get_running_loop().run_in_executor(
-            None, self._serialConnection.write, encodedMessage
-        )
+        self._serialConnection.write(encodedMessage)
 
-    async def receiveMessage(self, timeout: Optional[float] = None) -> str:
+    # TODO Add Timeout Functionality
+    def receiveMessage(self, timeout: Optional[float] = None) -> str:
         """
         Receive a message from the serial port.
 
@@ -42,9 +43,7 @@ class SerialCommunicator:
         Returns:
             str: The received message.
         """
-        receivedMessage = await asyncio.get_running_loop().run_in_executor(
-            None, self._serialConnection.read
-        )
+        receivedMessage = self._serialConnection.read()
         receivedMessage = receivedMessage.decode()
         return receivedMessage
 
