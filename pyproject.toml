@@ -12,3 +12,45 @@ keywords = []
 license = { text = "GPL-3.0" }
 classifiers = ["Programming Language :: Python :: 3"]
 dependencies = ["smbus2", "pyserial"]
+
+[tool.black]
+line-length = 88
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+)/
+'''
+
+[tool.pytest.ini_options]
+addopts = "--cov=CommunicatorCommon --cov-branch  --cov-report=term-missing --cov-report=html:build/tools/pytest/htmlcov --cov-report=xml:build/tools/pytest/coverage.xml --disable-warnings "
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.coverage.run]
+omit = []
+data_file = "build/tools/pytest/.coverage"
+
+[tool.coverage.report]
+fail_under = 0
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise AssertionError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+]
+
+[tool.pylint]
+disable = ["W0621"]
+max-line-length = 88
+ignore-paths = [".venv/*", "docs/*"]
+source = ["CommunicatorCommon", "tests"]
+fail-under = 0
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
