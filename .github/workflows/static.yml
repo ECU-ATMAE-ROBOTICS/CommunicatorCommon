@@ -3,6 +3,9 @@ name: Documentation
 on:
   push:
     branches: ["main"]
+    paths:
+      - "docs/source/**"
+      - "src/CommunicatorCommon/**"
   workflow_dispatch:
 
 permissions:
