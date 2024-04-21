@@ -11,6 +11,6 @@ make clean
 make html 2>&1 | tee "../$SPHINX_PATH/sphinx_output.txt"
 cd ..
 
-open docs/docs_build/html/index.html
+open $SPHINX_PATH/html/index.html
 
 deactivate
