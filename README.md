@@ -10,7 +10,6 @@ Common package for communications between devices. Contains Communicator classes
 ## Table of Contents
 
 - [Installation](#installation)
-- [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
 
