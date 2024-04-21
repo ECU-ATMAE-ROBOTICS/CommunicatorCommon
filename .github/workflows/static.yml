@@ -35,11 +35,14 @@ jobs:
           pip3 install -r src/requirements.txt sphinx sphinx-rtd-theme
       - name: Build Sphinx Documentation
         run: |
-          mkdir -p build/docs/sphinx
-          sphinx-build -b html docs/source/ build/docs/sphinx
+          mkdir -p build/docs/sphinx/html
+          sphinx-build -b html docs/source/ build/docs/sphinx/html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      - name: List output directory
+        run: ls -l build/docs/sphinx
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
